@@ -1,0 +1,211 @@
+<html>
+<head>
+    <title>Timer</title>
+    <script src="/primus/primus.js"></script>
+    <script src="jquery.js"></script>
+    <script>
+        var timer = 0, chrono = 0;
+        var timer1 = null; 
+        var time_state = 0;
+        var chrono_state = 0;
+      
+        function updateTimer(){
+            if (timer > 0){
+                time_min = Math.ceil(timer/60) - 1;
+                time_sec = timer - (60*time_min);
+                if (time_min > 0){
+                    document.title =  time_min + ":" + time_sec;
+                    time_string = "<span>" + time_min + ":" + time_sec + "</span>";
+                }else {
+                    document.title = timer; 
+                    time_string = "<span class='orange'>" + timer + "</span>";
+                }
+            }else{
+                if (timer > -60){
+                    document.title = timer;
+                    time_string = "<span class='red'>" + timer + " </span>";
+                    setTimeout("flashTimer()", 850);
+                }else{
+                    abstimer = Math.abs(timer);
+                    time_min = Math.ceil(abstimer/60) - 1;
+                    time_sec = abstimer - (60*time_min);
+                    time_string = "<span class='red'>-" + time_min + ":" + time_sec + " </span>";
+                    document.title = "-" + time_min + ":" + time_sec;
+                }
+            }
+            $('#timer').html( time_string);
+        }
+
+        function updateChrono(){
+            chrono_string = chrono;
+            if (chrono > 60){
+                chrono_min = Math.floor(chrono/60);
+                chrono_sec = chrono - chrono_min*60;
+                chrono_string = chrono_min + ":" + chrono_sec; 
+            }
+            $('#chrono').html(chrono_string);
+        }
+ 
+        function decreaseTime(){
+            if (time_state == 1){
+                timer = timer - 1;
+                updateTimer(); 
+            }
+            if (chrono_state == 1){
+                chrono = chrono + 1;
+                updateChrono();
+            }
+            clearTimeout(timer1);
+            timer1 = setTimeout("decreaseTime()", 1000);
+        } 
+        timer1 = setTimeout("decreaseTime()", 1000);
+        
+        function flashTimer(){
+            if (time_state == 1)
+                $('#timer span').removeClass("red").addClass("black");
+        }
+
+        function setupTime(time){
+            timer = time;
+            time_state = 1; 
+            clearTimeout(timer1);
+            timer1 = setTimeout("decreaseTime()", 1000);
+        }
+        
+        function pauseTime(){
+            time_state = 0;
+            chrono_state = 0;
+            $('#pause-resume').html('Resume');
+        }
+ 
+        function resumeTime(){
+            if (timer  != 0) time_state = 1;
+            if (chrono != 0) chrono_state = 1;
+            $('#pause-resume').html('Pause');
+            timer1 = setTimeout("decreaseTime()", 1000);
+        }
+
+        function reset(){
+            document.title = "Timer";
+            time_state = 0; chrono_state = 0;
+            $('#timer').html("0"); 
+            $('#chrono').html("00:00"); 
+            chrono = 0; timer = 0;
+            $('#start-chrono').html('Start chrono'); 
+        }
+
+        function setupTimeAction(time){
+            //boardcast
+            primus.write({'new_timer': time*60});
+        }
+
+        function pauseResumeTimeAction(){
+            //if one or another chrono is runing stop time
+            if (time_state == 1 || chrono_state == 1){
+                //stop time
+                primus.write({'action':'pause'});
+            }else{
+                primus.write({'action':'resume'});
+            }
+        }
+
+       function log(name, header, message) {
+            var div = document.createElement('div');
+            div.className = 'output output-'+ name;
+            div.innerHTML = [
+                '<h4>'+ header +'</h4>',
+                message ? '<p>'+ message +'</p>' : ''
+            ].join('');
+
+            document.getElementById('output').appendChild(div);
+            window.scroll(0, document.body.offsetHeight);
+        }
+    </script>
+    <style>
+        body { background: black; color: white; font-family: arial, sans serif; }        
+        .clock { width: 80%; height: 320px; border: solid 1px #fff; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;
+            padding: 10px; text-align: center;
+        } 
+        #timer { font-size: 300px; }
+        #chrono { font-size: 120px; color: #bbb; font-family: courier } 
+        .orange { color: orange; } .red { color: red; } .black {color: #000 !important;}
+        .action a { border: solid 1px #fff; color: white; padding: 5px 10px; text-decoration: none; }
+        .action a:hover { background: #fff; color: #000; }
+    </style>
+</head>
+<body>
+    <div class="action">
+        <p style="float: left">
+            <a id="start-chrono" href="#">Start Chrono</a>
+            &nbsp; &nbsp; &nbsp;
+            <a id="pause-resume" href="javascript:pauseResumeTimeAction();">Pause time</a>
+        </p>
+        <p style="float: right">
+            <a href="javascript:setupTimeAction(0.1);">5s</a>
+            <a href="javascript:setupTimeAction(1);">1min</a>
+            <a href="javascript:setupTimeAction(5);">5min</a>
+            <a href="javascript:setupTimeAction(10);">10min</a>
+            <a href="javascript:setupTimeAction(15);">15min</a>
+            <a href="javascript:setupTimeAction(20);">20min</a>
+            <a href="javascript:setupTimeAction(25);">25min</a>
+            <span>
+                <input type="text" name="inputtime" id="inputtime">
+            </span>
+        </p>
+    </div>
+    <div class="clock">
+        <span id="timer">0</span><br/>
+        <span id="chrono">00:00</span>
+    </div>
+    <div id="output"></div>
+    <script>
+        $('#inputtime').on('change', function (e){
+            setupTimeAction($(this).val());
+        });
+        $('#start-chrono').on('click', function (){
+            if (chrono_state == 0){
+                primus.write({'action': "startchrono"});
+            }else{
+                primus.write({'action': "reset"});
+            }
+        });
+        
+        var primus;
+        primus = new Primus();
+
+        primus.on('reconnect', function reconnect(opts) {
+            console.log("reconnecting");
+        });
+
+        primus.on('data', function incoming(data) {
+            if (data['new_timer']){
+                setupTime(parseInt(data['new_timer']));
+                console.log('new_timer = ' + data['new_timer']);
+            }
+            if (data['action'] && data['action'] == "pause"){
+                pauseTime();
+            }
+            if (data['action'] && data['action'] == "resume"){
+                resumeTime();
+            }
+            if (data['action'] && data['action'] == "startchrono"){
+                chrono_state = 1;
+                $('#start-chrono').html('Reset'); 
+            }
+            if (data['action'] && data['action'] == "reset"){
+                reset();
+            }
+        });
+
+        primus.on('end', function end() {
+            log('end', 'End', 'The connection has ended.');
+        });
+
+        primus.on('close', function end() {
+            log('close', 'close', 'We\'ve lost the connection to the server.');
+        });
+
+    </script>
+
+</body>
+</html>
