@@ -1,0 +1,26 @@
+{
+  "name": "tv-clock",
+  "version": "0.0.1",
+  "description": "Example application written for Primus & node",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "example",
+    "primus",
+    "node"
+  ],
+  "author": "Baptiste Michaud",
+  "license": "unlicenced",
+  "dependencies": {
+    "node-static": "*",
+    "primus": "*",
+    "ws": "*"
+  },
+  "subdomain": "primus-example",
+  "engines": {
+    "node": "0.10.x"
+  }
+}
