@@ -3,6 +3,7 @@
     <title>Timer</title>
     <script src="/primus/primus.js"></script>
     <script src="jquery.js"></script>
+    <script src="sprintf.min.js"></script>
     <script>
         var timer = 0, chrono = 0;
         var timer1 = null; 
@@ -14,34 +15,38 @@
                 time_min = Math.ceil(timer/60) - 1;
                 time_sec = timer - (60*time_min);
                 if (time_min > 0){
-                    document.title =  time_min + ":" + time_sec;
-                    time_string = "<span>" + time_min + ":" + time_sec + "</span>";
+                    time_string = sprintf("%+02u:%+02u", time_min, time_sec);
+                    document.title =  time_string;
+                    time_string = "<span>" + time_string + "</span>";
                 }else {
-                    document.title = timer; 
-                    time_string = "<span class='orange'>" + timer + "</span>";
+                    time_string = sprintf("%+02u:%+02u", 0, timer);
+                    document.title = time_string; 
+                    time_string = "<span class='orange'>" + time_string + "</span>";
                 }
             }else{
                 if (timer > -60){
-                    document.title = timer;
-                    time_string = "<span class='red'>" + timer + " </span>";
+                    time_string = sprintf("%+02u:%+02u", 0, Math.abs(timer));
+                    document.title = "-" + time_string;
+                    time_string = "<span class='red'>" + time_string + "</span>";
                     setTimeout("flashTimer()", 850);
                 }else{
                     abstimer = Math.abs(timer);
                     time_min = Math.ceil(abstimer/60) - 1;
                     time_sec = abstimer - (60*time_min);
-                    time_string = "<span class='red'>-" + time_min + ":" + time_sec + " </span>";
-                    document.title = "-" + time_min + ":" + time_sec;
+                    time_string = sprintf("%+02u:%+02u", time_min, time_sec);
+                    document.title = "-" + time_string;
+                    time_string = "<span class='red'>" + time_string + "</span>";
                 }
             }
             $('#timer').html( time_string);
         }
 
         function updateChrono(){
-            chrono_string = chrono;
+            chrono_string = sprintf("%+02u:%+02u", 0, chrono);
             if (chrono > 60){
                 chrono_min = Math.floor(chrono/60);
                 chrono_sec = chrono - chrono_min*60;
-                chrono_string = chrono_min + ":" + chrono_sec; 
+                chrono_string = sprintf("%+02u:%+02u", chrono_min, chrono_sec);
             }
             $('#chrono').html(chrono_string);
         }
@@ -55,6 +60,12 @@
                 chrono = chrono + 1;
                 updateChrono();
             }
+
+            // update clock
+            var currentTime = new Date ();
+            time = sprintf("%+02u:%+02u:%+02u", currentTime.getHours(), currentTime.getMinutes(), currentTime.getSeconds());
+            $('#clock').html(time);
+
             clearTimeout(timer1);
             timer1 = setTimeout("decreaseTime()", 1000);
         } 
@@ -88,10 +99,15 @@
         function reset(){
             document.title = "Timer";
             time_state = 0; chrono_state = 0;
-            $('#timer').html("0"); 
+            $('#timer').html("00:00"); 
             $('#chrono').html("00:00"); 
             chrono = 0; timer = 0;
             $('#start-chrono').html('Start chrono'); 
+        }
+
+
+        function stopTimerAction(){
+            primus.write({'action': 'stoptimer'});
         }
 
         function setupTimeAction(time){
@@ -123,14 +139,17 @@
     </script>
     <style>
         body { background: black; color: white; font-family: arial, sans serif; }        
-        .clock { width: 80%; height: 320px; border: solid 1px #fff; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;
+        .timer-area { width: 80%; height: 320px; border: solid 1px #fff; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;
             padding: 10px; text-align: center;
+            text-decoration: none; 
+            color: #fff;
         } 
         #timer { font-size: 300px; }
-        #chrono { font-size: 120px; color: #bbb; font-family: courier } 
+        #chrono, #clock { font-size: 120px; color: #bbb; font-family: courier } 
         .orange { color: orange; } .red { color: red; } .black {color: #000 !important;}
         .action a { border: solid 1px #fff; color: white; padding: 5px 10px; text-decoration: none; }
         .action a:hover { background: #fff; color: #000; }
+        .bottom-bar { position: absolute; height: 130px;  bottom: 0; width: 98%; }
     </style>
 </head>
 <body>
@@ -141,6 +160,7 @@
             <a id="pause-resume" href="javascript:pauseResumeTimeAction();">Pause time</a>
         </p>
         <p style="float: right">
+            <a href="javascript:stopTimerAction();">Stop</a>
             <a href="javascript:setupTimeAction(0.1);">5s</a>
             <a href="javascript:setupTimeAction(1);">1min</a>
             <a href="javascript:setupTimeAction(5);">5min</a>
@@ -153,9 +173,12 @@
             </span>
         </p>
     </div>
-    <div class="clock">
-        <span id="timer">0</span><br/>
-        <span id="chrono">00:00</span>
+    <a class="timer-area" href="javascript:pauseResumeTimeAction();">
+        <span id="timer">00:00</span><br/>
+    </a>
+    <div class="bottom-bar">
+        <span id="chrono" style="float: left">00:00</span>
+        <span id="clock" style="float: right">00:00</span>
     </div>
     <div id="output"></div>
     <script>
@@ -194,6 +217,12 @@
             }
             if (data['action'] && data['action'] == "reset"){
                 reset();
+            }
+            if (data['action'] && data['action'] == "stoptimer"){
+                document.title = "Timer";
+                time_state = 0; 
+                $('#timer').html("00:00"); 
+                timer = 0;
             }
         });
 

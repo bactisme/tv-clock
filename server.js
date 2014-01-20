@@ -4,7 +4,7 @@ var static = require('node-static'),
   url = require('url');
 
 var webroot = './public',
-  port = 8888;
+  port = 8001;
 
 var file = new static.Server('./public');
 
@@ -38,4 +38,4 @@ primus.on('connection', function (spark) {
     });
 });
 
-server.listen(8888);
+server.listen(port);
