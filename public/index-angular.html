@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html ng-app="tvclock">
+<head>
+    <title>Tv - Timer</title>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.min.js"></script>
+    <script src="/primus/primus.js"></script>
+    <script src="sprintf.min.js"></script>
+    <script src="tv-clock.js"></script>
+
+    <style>
+        body { background: black; color: white; font-family: arial, sans serif; }
+        .timer-area { width: 80%; height: 320px; border: solid 1px #fff; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;
+            padding: 10px; text-align: center;
+            text-decoration: none;
+            color: #fff;
+        }
+        #timer { font-size: 300px; }
+        #chrono, #clock { font-size: 120px; color: #bbb; font-family: courier }
+        .orange { color: orange; } .red { color: red; } .black {color: #000 !important;}
+        .action a { border: solid 1px #fff; color: white; padding: 5px 10px; text-decoration: none; }
+        .action a:hover { background: #fff; color: #000; }
+        .bottom-bar { position: absolute; height: 130px;  bottom: 0; width: 98%; }
+        .action .main { width: 100px; display: inline-block;}
+
+    </style>
+</head>
+<body ng-controller="TvClockCtrl" >
+    <div class="action">
+        <p style="float: left">
+            <a class="main" href="#" ng-click="startTimer()"
+               ng-bind="{0: 'Start Chrono', 1: 'Reset All'}[chrono_state]">
+                Start Chrono / Reset
+            </a>
+            &nbsp; &nbsp; &nbsp;
+            <a class="main" href="#" ng-click="pauseResumeTime()"
+               ng-bind="{0: 'Resume', 1: 'Pause Time'}[chrono_state || time_state]">
+                Pause time / Resume
+            </a>
+        </p>
+        <p style="float: right">
+            <a href="#" ng-click="primus.write({'action': 'stoptimer'});">Stop</a>
+            <a href="#" ng-click="primus.write({'new_timer': 5      });">5s</a>
+            <a href="#" ng-click="primus.write({'new_timer': 60     });">1min</a>
+            <a href="#" ng-click="primus.write({'new_timer': 5*60   });">5min</a>
+            <a href="#" ng-click="primus.write({'new_timer': 10*60   });">10min</a>
+            <a href="#" ng-click="primus.write({'new_timer': 15*60   });">15min</a>
+            <a href="#" ng-click="primus.write({'new_timer': 20*60   });">20min</a>
+            <a href="#" ng-click="primus.write({'new_timer': 25*60   });">25min</a>
+
+                <span>
+                    <input type="text" name="inputtime" ng-model="inputtime">
+                </span>
+        </p>
+    </div>
+    <a class="timer-area" href="#" ng-click="pauseResumeTime()" >
+        <span id="timer" ng-class="time_class">{{ time_string }}</span><br/>
+    </a>
+    <div class="bottom-bar">
+        <span id="chrono" style="float: left">{{ chrono_string }}</span>
+        <span id="clock" style="float: right">{{ clock_string }}</span>
+    </div>
+
+    <div id="output"></div>
+
+</body>
+</html>
