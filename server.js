@@ -3,8 +3,8 @@ var static = require('node-static'),
   util = require('util'),
   url = require('url');
 
-var webroot = './public',
-  port = 8001;
+var webroot = './public';
+var port = process.env.PORT || 8001;
 
 var file = new static.Server('./public');
 
