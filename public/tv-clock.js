@@ -18,8 +18,11 @@ app.controller('TvClockCtrl', function($scope, $timeout){
 
     $scope.inputtime = 0;
 
+    $scope.is_master = 0;
+
     $scope.$watch('inputtime', function (){
-        $scope.primus.write({'new_timer': $scope.inputtime*60 });
+        if ($scope.inputtime != 0)
+            $scope.primus.write({'new_timer': $scope.inputtime*60 });
     });
 
     var flashTimer = function(){
@@ -116,6 +119,35 @@ app.controller('TvClockCtrl', function($scope, $timeout){
             $scope.setupTime(parseInt(data['new_timer']));
             console.log('new_timer = ' + data['new_timer']);
         }
+
+        if (data['is_master']){
+            console.log('is_master');
+            $scope.is_master = 1;
+        }
+
+        if (data['ask_state']){
+            if ($scope.is_master == 1){
+                console.log('reply to ask_state');
+                $scope.primus.write({'action': 'state',
+                    'chrono_state': $scope.chrono_state,
+                    'time_state': $scope.time_state,
+                    'chrono': $scope. chrono,
+                    'timer': $scope.timer,
+                });
+            }
+        }
+
+        if (data['action'] && data['action'] == "state"){
+            if ($scope.is_master == 0){
+                console.log('acknoledge state');
+                console.log(data);
+                $scope.chrono = data['chrono'];
+                $scope.timer = data['timer'];
+                $scope.time_state = data['time_state'];
+                $scope.chrono_state = data['chrono_state'];
+            }
+        }
+    
         // pause time
         if (data['action'] && data['action'] == "pause"){
             $scope.time_state = 0;

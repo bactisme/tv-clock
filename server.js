@@ -20,8 +20,18 @@ var server = http.createServer(
 
 primus = new Primus(server, {/* options */});
 
+var connexions = [];
+
 primus.on('connection', function (spark) {
-    console.log("new Connexion");
+    console.log("-> New Client");
+
+    if (connexions.length == 0){
+        primus.write({'is_master': true})
+    }else{
+        primus.write({'ask_state': true });
+    }
+
+    connexions.push(spark.id);
 
     // data from client
     spark.on('data', function (data) {
@@ -31,11 +41,19 @@ primus.on('connection', function (spark) {
         if (data['new_timer']){
             primus.write({'new_timer' : data['new_timer']});
         }
-        // boardcast action
+        // boardcast all action
         if (data['action']){
-            primus.write({'action' : data['action']});
+            primus.write(data);
         }
     });
+});
+
+primus.on('disconnection', function (spark) {
+    var index = connexions.indexOf(spark.id);
+    if (index > -1) {
+        connexions.splice(index, 1);
+    }
+    
 });
 
 server.listen(port);
