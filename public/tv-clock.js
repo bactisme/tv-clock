@@ -35,18 +35,15 @@ app.controller('TvClockCtrl', function($scope, $timeout){
     }
     
     $scope.$watch("keyUp", function(){
+        if (typeof($scope.keyUp.keyCode) == "undefined") return;
         if ($scope.keyUp.keyCode == 32){
            $scope.pauseResumeTime(); 
         }else if ($scope.keyUp.keyCode == 83){
             // "S"
-            $scope.time_state = 0; // to clean
-            $scope.timer_string = "00:00";
-            $scope.timer = 0;
+            $scope.primus.write({'action': "reset"});
         }else if ($scope.keyUp.keyCode == 82){
             // "R"
-            document.title = "Timer"; // to clean
-            $scope.time_state = 0; $scope.chrono_state = 0;
-            $scope.chrono = 0; $scope.timer = 0;
+            $scope.primus.write({'action': "reset"});
         }else{
             //console.log($scope.keyUp.keyCode);
         }
@@ -141,12 +138,16 @@ app.controller('TvClockCtrl', function($scope, $timeout){
         $scope.timer = time;
         $scope.time_state = 1;
     }
+    
+    $scope.setupGoadl = function(time){
+        
+    }
 
     // PRIMUS
     $scope.primus.on('data', function incoming(data) {
         if (data['new_timer']){
-            $scope.setupTime(parseInt(data['new_timer']));
             console.log('new_timer = ' + data['new_timer']);
+            $scope.setupTime(parseInt(data['new_timer']));
         }
 
         if (data['is_master']){
