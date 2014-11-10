@@ -21,10 +21,10 @@
         .action a:hover { background: #fff; color: #000; }
         .bottom-bar { position: absolute; height: 130px;  bottom: 0; width: 98%; }
         .action .main { width: 100px; display: inline-block;}
-
+        a.timer-area.paused { background: #fff; color: black; }
     </style>
 </head>
-<body ng-controller="TvClockCtrl" >
+<body ng-controller="TvClockCtrl" ng-keyup="keyUp=$event" >
     <div class="action">
         <p style="float: left">
             <a class="main" href="#" ng-click="startTimer()"
@@ -52,7 +52,7 @@
                 </span>
         </p>
     </div>
-    <a class="timer-area" href="#" ng-click="pauseResumeTime()" >
+    <a class="timer-area" href="#" ng-click="pauseResumeTime()" ng-class="timer_class" >
         <span id="timer" ng-class="time_class">{{ time_string }}</span><br/>
     </a>
     <div class="bottom-bar">

@@ -2,9 +2,13 @@
 var app = angular.module('tvclock', []);
 
 app.controller('TvClockCtrl', function($scope, $timeout){
-    $scope.timer = 0;
+    $scope.timer = 0; // the timer in seconds
+    
     $scope.time_state = 0;
     $scope.time_string = "00:00";
+
+    // css 
+    $scope.timer_class = "paused";
     $scope.time_class = "";
 
     $scope.chrono = 0;
@@ -29,6 +33,32 @@ app.controller('TvClockCtrl', function($scope, $timeout){
         if ($scope.time_state == 1)
             $scope.time_class = "black";
     }
+    
+    $scope.$watch("keyUp", function(){
+        if ($scope.keyUp.keyCode == 32){
+           $scope.pauseResumeTime(); 
+        }else if ($scope.keyUp.keyCode == 83){
+            // "S"
+            $scope.time_state = 0; // to clean
+            $scope.timer_string = "00:00";
+            $scope.timer = 0;
+        }else if ($scope.keyUp.keyCode == 82){
+            // "R"
+            document.title = "Timer"; // to clean
+            $scope.time_state = 0; $scope.chrono_state = 0;
+            $scope.chrono = 0; $scope.timer = 0;
+        }else{
+            //console.log($scope.keyUp.keyCode);
+        }
+    });
+
+    $scope.$watch("time_state", function(){
+        if ($scope.time_state == 0){
+            $scope.timer_class = "paused";
+        }else{
+            $scope.timer_class = "";
+        }
+    });
 
     // auto update timer
     $scope.$watch("timer", function(){
@@ -88,7 +118,6 @@ app.controller('TvClockCtrl', function($scope, $timeout){
     }
     $scope.timer1 = $timeout(decreaseTime, 1000);
 
-
     // action !
     $scope.pauseResumeTime = function (){
         //if one or another chrono is runing stop time
@@ -125,18 +154,6 @@ app.controller('TvClockCtrl', function($scope, $timeout){
             $scope.is_master = 1;
         }
 
-        if (data['ask_state']){
-            if ($scope.is_master == 1){
-                console.log('reply to ask_state');
-                $scope.primus.write({'action': 'state',
-                    'chrono_state': $scope.chrono_state,
-                    'time_state': $scope.time_state,
-                    'chrono': $scope. chrono,
-                    'timer': $scope.timer,
-                });
-            }
-        }
-
         if (data['action'] && data['action'] == "state"){
             if ($scope.is_master == 0){
                 console.log('acknoledge state');
@@ -157,6 +174,7 @@ app.controller('TvClockCtrl', function($scope, $timeout){
         if (data['action'] && data['action'] == "resume"){
             if ($scope.timer  != 0) $scope.time_state = 1;
             if ($scope.chrono != 0) $scope.chrono_state = 1;
+
         }
         // start chrono
         if (data['action'] && data['action'] == "startchrono"){
